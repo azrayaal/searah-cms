@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-surface-page font-sans text-body text-gray-900 antialiased;
+  }
+
+  /**
+   * A single, consistent focus ring. Never remove it without a replacement —
+   * keyboard users navigate entirely by this affordance.
+   *
+   * Two-tone, because the sidebar is navy: a navy ring alone would vanish against
+   * it, and the sidebar is where a keyboard user starts. Whichever ground you are
+   * on, one of the two colours is carrying the contrast.
+   */
+  :focus-visible {
+    outline: 2px solid #0f3c8e; /* primary */
+    outline-offset: 2px;
+    box-shadow: 0 0 0 5px rgb(255 255 255 / 0.9);
+    border-radius: inherit;
+  }
+
+  /* Respect the OS-level reduced-motion preference: vestibular disorders make
+     large transitions genuinely unpleasant, not merely distracting. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Skip link — visually hidden until focused. */
+  .skip-link {
+    @apply absolute left-4 top-4 z-50 -translate-y-24 rounded-btn bg-primary px-4 py-2 text-sm
+           font-semibold text-white transition-transform focus:translate-y-0;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-gray-300;
+  }
+}
