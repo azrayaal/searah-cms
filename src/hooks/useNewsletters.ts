@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryClient';
 import {
   newsletterService,
+  type AttachmentPayload,
   type NewsletterListParams,
   type NewsletterPayload,
 } from '@/services/newsletter.service';
@@ -65,6 +66,48 @@ export function useSetNewsletterStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: ContentStatus }) =>
       newsletterService.setStatus(id, status),
+    onSuccess: invalidate,
+  });
+}
+
+/* ---------------------------------------------------------------- Attachments */
+
+export function useNewsletterAttachments(id: string) {
+  return useQuery({
+    queryKey: queryKeys.newsletters.attachments(id),
+    queryFn: () => newsletterService.listAttachments(id),
+    enabled: Boolean(id),
+  });
+}
+
+/**
+ * Attachment writes invalidate the article too, not only the attachment list: the
+ * detail endpoint includes `attachments`, so leaving it cached would show a stale
+ * count the moment the editor navigates back to the list.
+ */
+function useInvalidateAttachments(id: string) {
+  const client = useQueryClient();
+
+  return () => {
+    void client.invalidateQueries({ queryKey: queryKeys.newsletters.attachments(id) });
+    void client.invalidateQueries({ queryKey: queryKeys.newsletters.detail(id) });
+  };
+}
+
+export function useAddAttachment(id: string) {
+  const invalidate = useInvalidateAttachments(id);
+
+  return useMutation({
+    mutationFn: (payload: AttachmentPayload) => newsletterService.addAttachment(id, payload),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveAttachment(id: string) {
+  const invalidate = useInvalidateAttachments(id);
+
+  return useMutation({
+    mutationFn: (attachmentId: string) => newsletterService.removeAttachment(id, attachmentId),
     onSuccess: invalidate,
   });
 }

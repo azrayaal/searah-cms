@@ -1,5 +1,13 @@
 import { apiDelete, apiGetEnvelope, apiGet, apiPatch, apiPost } from '@/services/apiClient';
-import type { ApiEnvelope, ContentStatus, ListParams, Newsletter } from '@/types/api';
+import type {
+  ApiEnvelope,
+  ContentBlock,
+  ContentStatus,
+  ListParams,
+  MediaRef,
+  Newsletter,
+  NewsletterAttachment,
+} from '@/types/api';
 
 export interface NewsletterListParams extends ListParams {
   category?: string;
@@ -26,7 +34,13 @@ export interface NewsletterPayload {
   seoTitle?: string | null;
   seoDescription?: string | null;
   status?: ContentStatus;
+  content?: ContentBlock[] | null;
+  gallery?: MediaRef[] | null;
+  /** ISO string. Back-dates the article; omit to let the server stamp on first publish. */
+  publishedAt?: string | null;
 }
+
+export type AttachmentPayload = Omit<NewsletterAttachment, 'id'>;
 
 const BASE = '/admin/newsletters';
 
@@ -44,6 +58,19 @@ export const newsletterService = {
 
   /** Publish/unpublish is its own endpoint, gated by `newsletter:publish`. */
   setStatus: (id: string, status: ContentStatus) => apiPatch<Newsletter>(`${BASE}/${id}/status`, { status }),
+
+  /**
+   * Attachments are a relation, so they have their own sub-routes rather than riding
+   * along on the article PATCH. They therefore need a saved article to attach to —
+   * the form hides the panel until the record exists.
+   */
+  listAttachments: (id: string) => apiGet<NewsletterAttachment[]>(`${BASE}/${id}/attachments`),
+
+  addAttachment: (id: string, payload: AttachmentPayload) =>
+    apiPost<NewsletterAttachment>(`${BASE}/${id}/attachments`, payload),
+
+  removeAttachment: (id: string, attachmentId: string) =>
+    apiDelete(`${BASE}/${id}/attachments/${attachmentId}`),
 };
 
 /** Categories the source content already uses. */

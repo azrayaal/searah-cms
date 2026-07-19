@@ -1,7 +1,0 @@
-import{j as e}from"./query-CFD2dyNG.js";import{c as a,B as t}from"./index-DXeti2XE.js";import{C as r}from"./Card-BRSy4joy.js";import{L as s}from"./react-CFDEbFGL.js";import{A as o}from"./arrow-left-DMt_lW3W.js";/**
- * @license lucide-react v0.474.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const i=[["path",{d:"M12 17h.01",key:"p32p05"}],["path",{d:"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z",key:"1mlx9k"}],["path",{d:"M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3",key:"mhlwft"}]],n=a("FileQuestion",i);function h(){return e.jsxs(r,{className:"mx-auto max-w-xl text-center",children:[e.jsx("div",{className:"mx-auto flex h-14 w-14 items-center justify-center rounded-card bg-primary-100 text-primary","aria-hidden":"true",children:e.jsx(n,{className:"h-7 w-7"})}),e.jsx("p",{className:"mt-6 text-label uppercase text-gray-500",children:"Error 404"}),e.jsx("h1",{className:"mt-2 text-h3 text-gray-900",children:"Page not found"}),e.jsx("p",{className:"mx-auto mt-3 max-w-prose text-sm text-gray-500",children:"The page you are looking for does not exist or has been moved."}),e.jsx("div",{className:"mt-8 flex justify-center",children:e.jsx(s,{to:"/",children:e.jsx(t,{variant:"secondary",leadingIcon:e.jsx(o,{className:"h-4 w-4","aria-hidden":"true"}),children:"Back to dashboard"})})})]})}export{h as default};
-//# sourceMappingURL=NotFoundPage-BpD0Gd1u.js.map

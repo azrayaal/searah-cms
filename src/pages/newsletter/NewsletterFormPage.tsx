@@ -7,6 +7,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { MediaField } from '@/components/media/MediaPicker';
+import { AttachmentsPanel } from '@/components/newsletter/AttachmentsPanel';
+import { BlockEditor } from '@/components/newsletter/BlockEditor';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Checkbox, Input, Select, Textarea } from '@/components/ui/Field';
@@ -15,6 +18,7 @@ import { applyFieldErrors } from '@/hooks/useAuth';
 import { useCreateNewsletter, useNewsletter, useUpdateNewsletter } from '@/hooks/useNewsletters';
 import { ENTITY_CODES, NEWSLETTER_CATEGORIES } from '@/services/newsletter.service';
 import { useAuthStore } from '@/store/auth.store';
+import type { ContentBlock } from '@/types/api';
 
 /**
  * Mirrors the server's Zod schema.
@@ -47,6 +51,8 @@ const formSchema = z.object({
   seoTitle: z.string().max(200).optional(),
   seoDescription: z.string().max(400).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('DRAFT'),
+  // `datetime-local` value, i.e. "2026-07-20T09:30" in the editor's own timezone.
+  publishedAt: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -62,6 +68,21 @@ function parseTags(value: string | undefined): string[] {
         .filter(Boolean),
     ),
   ];
+}
+
+/**
+ * ISO instant to the `datetime-local` shape the input expects, in local time.
+ * Slicing the ISO string would show UTC and silently shift the date for any editor
+ * east or west of Greenwich.
+ */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return '';
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
 const EMPTY: FormValues = {
@@ -82,6 +103,7 @@ const EMPTY: FormValues = {
   seoTitle: '',
   seoDescription: '',
   status: 'DRAFT',
+  publishedAt: '',
 };
 
 /**
@@ -115,8 +137,24 @@ export default function NewsletterFormPage() {
     handleSubmit,
     reset,
     setError,
+    setValue,
+    watch,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({ resolver: zodResolver(formSchema), defaultValues: EMPTY });
+
+  /**
+   * The body lives outside react-hook-form.
+   *
+   * RHF is built around registered inputs, and the block model is a nested
+   * discriminated union whose shape changes with the block type — expressing that as
+   * registered field paths costs far more than it saves for a value that is edited
+   * wholesale and validated on the server anyway.
+   */
+  const [blocks, setBlocks] = useState<ContentBlock[]>([]);
+
+  // Media fields are RHF values but not RHF inputs: the picker sets them imperatively.
+  const setUrl = (field: 'thumbnailUrl' | 'coverUrl' | 'pdfUrl') => (url: string) =>
+    setValue(field, url, { shouldDirty: true });
 
   // Populates the form once the record arrives. `reset` rather than defaultValues,
   // because the data is not available on first render.
@@ -141,7 +179,10 @@ export default function NewsletterFormPage() {
       seoTitle: existing.seoTitle ?? '',
       seoDescription: existing.seoDescription ?? '',
       status: existing.status,
+      publishedAt: toLocalInput(existing.publishedAt),
     });
+
+    setBlocks(existing.content ?? []);
   }, [existing, reset]);
 
   // Warns before losing unsaved edits on a browser navigation.
@@ -175,6 +216,10 @@ export default function NewsletterFormPage() {
       seoTitle: values.seoTitle || null,
       seoDescription: values.seoDescription || null,
       status: values.status,
+      content: blocks,
+      // Left blank, the server keeps whatever date the article already had and stamps
+      // one on first publish — so an empty field means "don't override", not "clear".
+      publishedAt: values.publishedAt ? new Date(values.publishedAt).toISOString() : null,
     };
 
     try {
@@ -262,24 +307,58 @@ export default function NewsletterFormPage() {
             <FormSectionHeader title="Media" description="Images and attachments for the article." />
 
             <div className="flex flex-col gap-5 p-6">
-              <Input
-                label="Thumbnail URL"
-                placeholder="/media/offshore-platform.jpg"
+              <MediaField
+                label="Thumbnail"
+                hint="Shown on cards across the site."
                 error={errors.thumbnailUrl?.message}
-                {...register('thumbnailUrl')}
+                value={watch('thumbnailUrl') ?? ''}
+                onChange={setUrl('thumbnailUrl')}
               />
-              <Input
-                label="Cover image URL"
-                placeholder="/media/offshore-platform.jpg"
+              <MediaField
+                label="Cover image"
+                hint="The banner at the top of the article."
                 error={errors.coverUrl?.message}
-                {...register('coverUrl')}
+                value={watch('coverUrl') ?? ''}
+                onChange={setUrl('coverUrl')}
               />
-              <Input
-                label="PDF URL"
+              <MediaField
+                label="PDF edition"
                 hint="Optional downloadable edition."
+                kind="document"
                 error={errors.pdfUrl?.message}
-                {...register('pdfUrl')}
+                value={watch('pdfUrl') ?? ''}
+                onChange={setUrl('pdfUrl')}
               />
+            </div>
+          </Card>
+
+          <Card flush>
+            <FormSectionHeader
+              title="Article body"
+              description="Blocks render in this order on the published page."
+            />
+
+            <div className="p-6">
+              <BlockEditor value={blocks} onChange={setBlocks} />
+            </div>
+          </Card>
+
+          <Card flush>
+            <FormSectionHeader
+              title="Attachments"
+              description="Downloadable files listed at the foot of the article."
+            />
+
+            <div className="p-6">
+              {isEdit && id ? (
+                <AttachmentsPanel newsletterId={id} />
+              ) : (
+                // Attachments are rows keyed to an article id, so there is nothing to
+                // attach them to until the article has been saved once.
+                <p className="rounded-card border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500">
+                  Save the article first, then add attachments.
+                </p>
+              )}
             </div>
           </Card>
 
@@ -320,6 +399,15 @@ export default function NewsletterFormPage() {
                   { value: 'ARCHIVED', label: 'Archived' },
                 ]}
                 {...register('status')}
+              />
+
+              <Input
+                type="datetime-local"
+                label="Publication date"
+                hint="Leave blank to stamp the moment it first goes live."
+                disabled={!can('newsletter:publish')}
+                error={errors.publishedAt?.message}
+                {...register('publishedAt')}
               />
 
               <Select

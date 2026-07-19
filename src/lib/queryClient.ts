@@ -39,6 +39,7 @@ export const queryKeys = {
     all: ['newsletters'] as const,
     list: (params: Record<string, unknown>) => ['newsletters', 'list', params] as const,
     detail: (id: string) => ['newsletters', 'detail', id] as const,
+    attachments: (id: string) => ['newsletters', 'detail', id, 'attachments'] as const,
   },
 
   media: {
