@@ -76,6 +76,10 @@ export interface Newsletter {
   thumbnailUrl: string | null;
   coverUrl: string | null;
   pdfUrl: string | null;
+  thumbnailAlt: string | null;
+  coverAlt: string | null;
+  coverCaption: string | null;
+  coverCredit: string | null;
   content: ContentBlock[] | null;
   gallery: MediaRef[] | null;
   tags: string[];

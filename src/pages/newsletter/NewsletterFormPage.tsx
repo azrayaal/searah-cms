@@ -42,6 +42,10 @@ const formSchema = z.object({
   thumbnailUrl: z.string().max(500).optional(),
   coverUrl: z.string().max(500).optional(),
   pdfUrl: z.string().max(500).optional(),
+  thumbnailAlt: z.string().max(300).optional(),
+  coverAlt: z.string().max(300).optional(),
+  coverCaption: z.string().max(500).optional(),
+  coverCredit: z.string().max(200).optional(),
   authorName: z.string().max(150).optional(),
   authorRole: z.string().max(150).optional(),
   readingTime: z.string().max(40).optional(),
@@ -94,6 +98,10 @@ const EMPTY: FormValues = {
   thumbnailUrl: '',
   coverUrl: '',
   pdfUrl: '',
+  thumbnailAlt: '',
+  coverAlt: '',
+  coverCaption: '',
+  coverCredit: '',
   authorName: '',
   authorRole: '',
   readingTime: '',
@@ -170,6 +178,10 @@ export default function NewsletterFormPage() {
       thumbnailUrl: existing.thumbnailUrl ?? '',
       coverUrl: existing.coverUrl ?? '',
       pdfUrl: existing.pdfUrl ?? '',
+      thumbnailAlt: existing.thumbnailAlt ?? '',
+      coverAlt: existing.coverAlt ?? '',
+      coverCaption: existing.coverCaption ?? '',
+      coverCredit: existing.coverCredit ?? '',
       authorName: existing.authorName ?? '',
       authorRole: existing.authorRole ?? '',
       readingTime: existing.readingTime ?? '',
@@ -207,6 +219,10 @@ export default function NewsletterFormPage() {
       thumbnailUrl: values.thumbnailUrl || null,
       coverUrl: values.coverUrl || null,
       pdfUrl: values.pdfUrl || null,
+      thumbnailAlt: values.thumbnailAlt || null,
+      coverAlt: values.coverAlt || null,
+      coverCaption: values.coverCaption || null,
+      coverCredit: values.coverCredit || null,
       authorName: values.authorName || null,
       authorRole: values.authorRole || null,
       readingTime: values.readingTime || null,
@@ -321,6 +337,35 @@ export default function NewsletterFormPage() {
                 value={watch('coverUrl') ?? ''}
                 onChange={setUrl('coverUrl')}
               />
+              <Input
+                label="Thumbnail alt text"
+                hint="Describes the photograph for readers who cannot see it — not the headline."
+                placeholder="Deepwater drilling unit operating over the Geng North field"
+                error={errors.thumbnailAlt?.message}
+                {...register('thumbnailAlt')}
+              />
+
+              <Input
+                label="Cover alt text"
+                hint="Leave blank to reuse the thumbnail's."
+                error={errors.coverAlt?.message}
+                {...register('coverAlt')}
+              />
+
+              <Input
+                label="Cover caption"
+                hint="Printed beneath the cover image on the article page."
+                error={errors.coverCaption?.message}
+                {...register('coverCaption')}
+              />
+
+              <Input
+                label="Cover credit"
+                placeholder="Searah Muara Bakau"
+                error={errors.coverCredit?.message}
+                {...register('coverCredit')}
+              />
+
               <MediaField
                 label="PDF edition"
                 hint="Optional downloadable edition."

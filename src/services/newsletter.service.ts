@@ -25,6 +25,10 @@ export interface NewsletterPayload {
   thumbnailUrl?: string | null;
   coverUrl?: string | null;
   pdfUrl?: string | null;
+  thumbnailAlt?: string | null;
+  coverAlt?: string | null;
+  coverCaption?: string | null;
+  coverCredit?: string | null;
   tags?: string[];
   authorName?: string | null;
   authorRole?: string | null;
