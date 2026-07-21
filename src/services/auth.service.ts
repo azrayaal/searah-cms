@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from '@/services/apiClient';
+import { apiGet, apiPatch, apiPost, clearAuthTokens, getRefreshToken, setAuthTokens } from '@/services/apiClient';
 import type { CurrentUser, LoginResponse } from '@/types/api';
 
 export interface LoginPayload {
@@ -14,14 +14,31 @@ export interface ChangePasswordPayload {
 }
 
 export const authService = {
-  login: (payload: LoginPayload) => apiPost<LoginResponse>('/auth/login', payload),
+  login: async (payload: LoginPayload) => {
+    const result = await apiPost<LoginResponse>('/auth/login', payload);
+    setAuthTokens(result, payload.rememberMe ?? false);
+    return result;
+  },
 
-  logout: () => apiPost<null>('/auth/logout'),
+  logout: async () => {
+    try {
+      // Sent explicitly so the server can revoke the refresh token even when the
+      // cookie never made it across sites — otherwise it stays valid until expiry.
+      return await apiPost<null>('/auth/logout', { refreshToken: getRefreshToken() ?? undefined });
+    } finally {
+      clearAuthTokens();
+    }
+  },
 
-  /** Probes the session on boot. The cookie is sent automatically. */
+  /** Probes the session on boot, using the stored token or the cookie. */
   me: () => apiGet<CurrentUser>('/auth/me'),
 
-  changePassword: (payload: ChangePasswordPayload) => apiPost<null>('/auth/change-password', payload),
+  changePassword: async (payload: ChangePasswordPayload) => {
+    // The backend revokes every session here, so the stored tokens are already dead.
+    const result = await apiPost<null>('/auth/change-password', payload);
+    clearAuthTokens();
+    return result;
+  },
 
   forgotPassword: (email: string) => apiPost<{ devToken?: string }>('/auth/forgot-password', { email }),
 

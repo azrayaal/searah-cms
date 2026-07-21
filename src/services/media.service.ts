@@ -1,4 +1,5 @@
-import { apiClient, apiDelete, apiGetEnvelope } from '@/services/apiClient';
+import { apiDelete, apiGetEnvelope } from '@/services/apiClient';
+import { mockUpload } from '@/services/mock/mockApi';
 import type { ApiEnvelope, ListParams, MediaAsset } from '@/types/api';
 
 export interface MediaListParams extends ListParams {
@@ -19,13 +20,16 @@ export const mediaService = {
    * Passing FormData and leaving Content-Type unset is what makes that happen.
    */
   upload: async (files: File[], meta?: { alt?: string; folderId?: string }): Promise<MediaAsset[]> => {
-    const form = new FormData();
-    for (const file of files) form.append('files', file);
-    if (meta?.alt) form.append('alt', meta.alt);
-    if (meta?.folderId) form.append('folderId', meta.folderId);
-
-    const response = await apiClient.post<ApiEnvelope<MediaAsset[]>>(`${BASE}/upload`, form);
-    return response.data.data;
+    // DUMMY MODE — see the note in `apiClient`. Uncomment the block below and drop the
+    // `mockUpload` line to post to the real endpoint again.
+    // const form = new FormData();
+    // for (const file of files) form.append('files', file);
+    // if (meta?.alt) form.append('alt', meta.alt);
+    // if (meta?.folderId) form.append('folderId', meta.folderId);
+    //
+    // const response = await apiClient.post<ApiEnvelope<MediaAsset[]>>(`${BASE}/upload`, form);
+    // return response.data.data;
+    return mockUpload(files, meta);
   },
 
   remove: (id: string) => apiDelete(`${BASE}/${id}`),
